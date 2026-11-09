@@ -1,0 +1,19 @@
+{
+  "name": "stockpilot-agent-service",
+  "version": "0.1.0",
+  "description": "StockPilot agent service: quotes and prepares Aerodrome Slipstream swaps for tokenized-stock DCA plans on Base.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "keeper": "node src/keeper.mjs",
+    "keeper:once": "node src/keeper.mjs --once"
+  },
+  "dependencies": {
+    "ethers": "^6.13.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

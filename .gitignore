@@ -1,0 +1,16 @@
+# Secrets — never commit
+.secrets/
+DEPLOYER_KEY
+.env
+.env.*
+*.pem
+*.key
+id_rsa*
+# Node
+node_modules/
+# Foundry build artifacts
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+# OS
+.DS_Store

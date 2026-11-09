@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>StockPilot — Agentic Stock Finance on Base</title>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js"></script>
+<style>
+  :root { --bg:#0b1220; --card:#111c2e; --line:#1e2d45; --txt:#e6edf7; --mut:#8aa0b8; --acc:#2f81f7; --ok:#2ea043; --warn:#d29922; --bad:#f85149; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  header { display:flex; align-items:center; gap:12px; padding:14px 20px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  header h1 { font-size:20px; margin:0; }
+  header .sub { color:var(--mut); font-size:13px; }
+  .spacer { flex:1; }
+  button { background:var(--acc); color:#fff; border:0; border-radius:8px; padding:9px 14px; cursor:pointer; font-size:14px; }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  button.ghost { background:transparent; border:1px solid var(--line); color:var(--txt); }
+  button.danger { background:transparent; border:1px solid var(--bad); color:var(--bad); }
+  main { max-width:1020px; margin:0 auto; padding:18px 16px 60px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
+  .card h2 { margin:0 0 10px; font-size:17px; }
+  .card p.note { color:var(--mut); font-size:13px; margin:6px 0; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; }
+  .stock { border:1px solid var(--line); border-radius:10px; padding:12px; background:#0e1828; }
+  .stock .sym { font-weight:700; font-size:16px; }
+  .stock .name { color:var(--mut); font-size:12px; }
+  .stock .price { font-size:20px; margin:8px 0 2px; }
+  .stock .chg { font-size:13px; }
+  .up { color:var(--ok); } .down { color:var(--bad); }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  label { display:block; font-size:13px; color:var(--mut); margin:10px 0 4px; }
+  input, select { width:100%; background:#0b1526; border:1px solid var(--line); color:var(--txt); border-radius:8px; padding:9px 10px; font-size:14px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--mut); font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+  .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; border:1px solid var(--line); }
+  .pill.due { border-color:var(--ok); color:var(--ok); }
+  .pill.wait { border-color:var(--warn); color:var(--warn); }
+  #log { white-space:pre-wrap; font-family:ui-monospace,Menlo,monospace; font-size:12.5px; background:#081020; border:1px solid var(--line); border-radius:8px; padding:10px; max-height:260px; overflow:auto; }
+  a { color:#7fb3ff; }
+  .banner { background:#2a1f0a; border:1px solid var(--warn); color:#ffd9a0; border-radius:10px; padding:10px 12px; margin-bottom:16px; font-size:13.5px; }
+  .addr { font-family:ui-monospace,Menlo,monospace; font-size:12px; color:var(--mut); word-break:break-all; }
+  footer { color:var(--mut); font-size:12px; text-align:center; padding:20px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📈 StockPilot</h1>
+  <span class="sub">Agentic Stock Finance on Base — DCA plans for Coinbase tokenized stocks, executed on-chain.</span>
+  <span class="spacer"></span>
+  <span id="netLabel" class="pill">not connected</span>
+  <button id="connectBtn">Connect wallet</button>
+</header>
+<main>
+  <div id="sepoliaBanner" class="banner" style="display:none">
+    You are on <b>Base Sepolia</b> (testnet). Plans work here, but swaps need the Sepolia mock pool deployed — see README. Switch to Base mainnet for real stock swaps.
+  </div>
+  <div id="deployBanner" class="banner" style="display:none">
+    Contracts are not deployed yet on this network (registry/swapper address is 0x000…0). The app shows live prices, but plans and swaps are disabled until deployment — see README.md.
+  </div>
+
+  <div class="card">
+    <h2>Tokenized stocks on Base</h2>
+    <p class="note">Coinbase B20 tokenized stocks (8 decimals, 1 token ≈ 1 share). Deep liquidity on Aerodrome Slipstream (USDC pairs, fee 500). Prices live from DexScreener. Click a stock to trade it.</p>
+    <div id="stockGrid" class="grid"></div>
+  </div>
+
+  <div class="card">
+    <h2>Create a DCA plan</h2>
+    <p class="note">A plan is a public, ownable on-chain record (StockPilotPlans registry). The StockPilot agent watches due plans and prepares the swap; you execute it in your wallet. No funds are ever held by the contract.</p>
+    <div class="row">
+      <div style="flex:2;min-width:180px"><label>Stock</label><select id="planStock"></select></div>
+      <div style="flex:1;min-width:120px"><label>Amount (USDC) per execution</label><input id="planAmount" type="number" min="1" step="1" value="10" /></div>
+      <div style="flex:1;min-width:120px"><label>Interval</label><select id="planInterval"><option value="3600">1 hour</option><option value="86400" selected>1 day</option><option value="604800">1 week</option></select></div>
+      <div style="flex:1;min-width:120px"><label>Max executions</label><input id="planMax" type="number" min="1" step="1" value="4" /></div>
+    </div>
+    <label>Plan name</label>
+    <input id="planName" type="text" maxlength="64" value="NVDA weekly DCA" />
+    <div class="row" style="margin-top:12px"><button id="createPlanBtn">Create plan (on-chain)</button></div>
+  </div>
+
+  <div class="card">
+    <h2>My plans</h2>
+    <p class="note">Plans owned by the connected wallet. “Due” means the interval has passed since the last execution. Executing a due plan: (1) approve USDC to the StockPilotSwapper, (2) swap USDC → stock at the live price (1% slippage guard), (3) record the execution on-chain.</p>
+    <div id="plansWrap"><p class="note">Connect a wallet to see your plans.</p></div>
+  </div>
+
+  <div class="card">
+    <h2>Ad-hoc trade</h2>
+    <p class="note">Buy a stock right now (no plan). Same flow: approve → swap → record on-chain as a trade.</p>
+    <div class="row">
+      <div style="flex:2;min-width:180px"><label>Stock</label><select id="tradeStock"></select></div>
+      <div style="flex:1;min-width:120px"><label>Amount (USDC)</label><input id="tradeAmount" type="number" min="1" step="1" value="10" /></div>
+      <div style="flex:0 0 auto;align-self:flex-end"><button id="tradeBtn">Buy now</button></div>
+    </div>
+    <p class="note" id="tradeQuote"></p>
+  </div>
+
+  <div class="card">
+    <h2>Activity</h2>
+    <p class="note">Recent StockPilotPlans events (plans created / executed / trades recorded) on this network.</p>
+    <div id="activityWrap"><p class="note">Connect a wallet to load activity.</p></div>
+  </div>
+
+  <div class="card">
+    <h2>Log</h2>
+    <div id="log"></div>
+  </div>
+
+  <div class="card">
+    <h2>Contracts</h2>
+    <p class="note">Addresses are set after deployment (see README.md). The swapper is the only contract you ever approve USDC to; it holds no funds between calls and swaps directly against the verified Slipstream pool.</p>
+    <div id="contractList"></div>
+  </div>
+</main>
+<footer>StockPilot — Base “Stocks Maxxing Season” hackathon. Non-custodial. Not financial advice. Tokenized stocks are Regulation S instruments issued by Coinbase Onchain SPV Ltd; not offered to US persons.</footer>
+
+<script>
+"use strict";
+/* ================= config (fill after deployment) ================= */
+const CHAIN = {
+  8453:  { name:"Base",         rpc:"https://mainnet.base.org", usdc:"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+           registry:"0x0000000000000000000000000000000000000000", swapper:"0x0000000000000000000000000000000000000000",
+           explorer:"https://basescan.org" },
+  84532: { name:"Base Sepolia", rpc:"https://sepolia.base.org", usdc:"0x4280743426B055e76Ee462a83efE66e787DD7C74",
+           registry:"0x2e5A1caB12b8902A840c8636caa58bcba084E060", swapper:"0x1444524A69BFC4352DaAd9B5cd9272A2EbB11bb1",
+           explorer:"https://sepolia.basescan.org" },
+};
+const STOCKS = [
+  { symbol:"NVDAc",  ticker:"NVDA",  name:"NVIDIA Corporation",    address:"0xb20000000000000000000078ee7ce2fE4908108C", pool:"0x853F5f1B92b16714Fe6CDA67CAad0856B83C7ab9" },
+  { symbol:"AAPLc",  ticker:"AAPL",  name:"Apple Inc.",            address:"0xb200000000000000000000C2e324d24d7eEcd1fb", pool:"0xA3b1E3f9747065e2073722Ff4c9027d3eA4994F0" },
+  { symbol:"MSFTc",  ticker:"MSFT",  name:"Microsoft Corporation", address:"0xB200000000000000000000Ab99cFa739E253872B", pool:"0x7103eB3c9590d1281f7dc03b2A9EE27C39dF5D54" },
+  { symbol:"GOOGLc", ticker:"GOOGL", name:"Alphabet Inc.",         address:"0xb2000000000000000000002D0BA3164cc74f58B7", pool:"0xB1987CAD1682841b4b641d50E520777eC5Ab5542" },
+  { symbol:"METAc",  ticker:"META",  name:"Meta Platforms Inc.",   address:"0xb2000000000000000000008bC8786B856E61707C", pool:"0xEAF57753BC382E0324a1D43F72E7027705a2273E" },
+];
+/* Base Sepolia mock stocks — deployed 9 Nov 2026 (see SEPOLIA_DEPLOY.md).
+   Fixed-rate mock pools; priceUsd is the mock pool's fixed rate
+   (priceScaled/1e6). DexScreener has no pairs for these, so loadPrices
+   uses priceUsd directly on chain 84532. The Sepolia "USDC" in CHAIN
+   above is the mock USDC the pools trade against. */
+const STOCKS_SEPOLIA = [
+  { symbol:"NVDAc",  ticker:"NVDA",  name:"NVIDIA Corporation",    address:"0xb75Bd2C86Fc79db001e07AC5d590288B5a1AE639", pool:"0x0B286F6eE6aa92Ec750a14b5d12F4B971D67D069", priceUsd:176.84 },
+  { symbol:"AAPLc",  ticker:"AAPL",  name:"Apple Inc.",            address:"0x21CAa92de6848b36Da97aFeA47bDBDb980F193f6", pool:"0xF7b1111d7b2AD109FDa383c2Eaa71eE2D9e8b1E5", priceUsd:350.94 },
+  { symbol:"MSFTc",  ticker:"MSFT",  name:"Microsoft Corporation", address:"0x15AF17033Ec02679698c2FF48F3Ed3A91068cD0E", pool:"0xa3983Ca7d279aAa2932a665A9a3B5a68C399A0a5", priceUsd:542.55 },
+  { symbol:"GOOGLc", ticker:"GOOGL", name:"Alphabet Inc.",         address:"0x039c1eb1dCD8513c4F77B5ab1a1c522d1B78DA4d", pool:"0xbb86CF94914fAB15ad2261c05cc8cBFbd5D75604", priceUsd:293.62 },
+  { symbol:"METAc",  ticker:"META",  name:"Meta Platforms Inc.",   address:"0x9fF9cf18cFaf1236EBD58D3A09eaDCB3532ba078", pool:"0x317A76d60B2dDfC6c1572E3cf763AC9505114274", priceUsd:642.05 },
+];
+/* Stock list for the currently connected chain (mainnet before connect). */
+function stocks(){ return chainId===84532 ? STOCKS_SEPOLIA : STOCKS; }
+function refreshStockLists(){
+  $("planStock").innerHTML = stocks().map(s=>`<option value="${s.symbol}">${s.symbol} — ${s.name}</option>`).join("");
+  $("tradeStock").innerHTML = stocks().map(s=>`<option value="${s.symbol}">${s.symbol} — ${s.name}</option>`).join("");
+}
+const REGISTRY_ABI = [
+  "function planCount() view returns (uint256)",
+  "function getPlan(uint256) view returns (tuple(address owner,address token,uint256 amountUSDC,uint256 intervalSeconds,uint256 maxExecutions,uint256 executions,uint256 createdAt,uint256 lastExecutedAt,bool active,string name))",
+  "function plansOf(address) view returns (uint256[])",
+  "function isDue(uint256) view returns (bool)",
+  "function createPlan(address,uint256,uint256,uint256,string) returns (uint256)",
+  "function recordExecution(uint256,uint256,uint256,bytes32)",
+  "function cancelPlan(uint256)",
+  "function recordTrade(address,uint256,uint256,bytes32) returns (uint256)",
+  "event PlanCreated(uint256 indexed planId,address indexed owner,address indexed token,uint256 amountUSDC,uint256 intervalSeconds,uint256 maxExecutions,string name)",
+  "event PlanExecuted(uint256 indexed planId,address indexed owner,uint256 executionIndex,uint256 amountInUSDC,uint256 amountOut,bytes32 txHash)",
+  "event PlanCancelled(uint256 indexed planId,address indexed owner)",
+  "event TradeRecorded(uint256 indexed tradeId,address indexed trader,address indexed token,uint256 amountInUSDC,uint256 amountOut,bytes32 txHash)",
+];
+const SWAPPER_ABI = ["function swapExactInput(address pool,address tokenIn,address tokenOut,uint256 amountIn,uint256 minOut,address recipient) returns (uint256)"];
+const ERC20_ABI = ["function approve(address,uint256) returns (bool)","function allowance(address,address) view returns (uint256)","function balanceOf(address) view returns (uint256)","function decimals() view returns (uint8)"];
+const ZERO = "0x0000000000000000000000000000000000000000";
+const SLIPPAGE_BPS = 100; // 1%
+
+/* ================= state ================= */
+let provider = null, signer = null, account = null, chainId = null;
+let prices = {}; // symbol -> {priceUsd, change24h}
+const $ = (id) => document.getElementById(id);
+function log(...a){ const el=$("log"); el.textContent += a.map(x=>typeof x==="string"?x:JSON.stringify(x)).join(" ")+"\n"; el.scrollTop=el.scrollHeight; }
+function short(a){ return a ? a.slice(0,6)+"…"+a.slice(-4) : ""; }
+function stockByAddr(a){ return STOCKS.find(s=>s.address.toLowerCase()===a.toLowerCase()) || STOCKS_SEPOLIA.find(s=>s.address.toLowerCase()===a.toLowerCase()); }
+function explorerTx(hash){ const c=CHAIN[chainId]; return c ? `${c.explorer}/tx/${hash}` : hash; }
+function explorerAddr(a){ const c=CHAIN[chainId]; return c ? `${c.explorer}/address/${a}` : a; }
+
+/* ================= prices ================= */
+async function loadPrices(){
+  const grid = $("stockGrid");
+  grid.innerHTML = stocks().map(s=>`<div class="stock" data-sym="${s.symbol}"><div class="sym">${s.symbol}</div><div class="name">${s.name}</div><div class="price">…</div><div class="chg">loading…</div><div class="row" style="margin-top:8px"><button class="ghost" data-trade="${s.symbol}">Trade</button></div></div>`).join("");
+  grid.querySelectorAll("[data-trade]").forEach(b=>b.onclick=()=>{ $("tradeStock").value=b.dataset.trade; updateTradeQuote(); document.querySelector(".card:nth-of-type(4)").scrollIntoView({behavior:"smooth"}); });
+  for (const s of stocks()){
+    /* Sepolia mock pools are fixed-rate; DexScreener has no pairs for them. */
+    if (chainId===84532 && s.priceUsd){
+      prices[s.symbol] = { priceUsd:s.priceUsd, change24h:null };
+      const el = grid.querySelector(`[data-sym="${s.symbol}"]`);
+      el.querySelector(".price").textContent = "$"+s.priceUsd.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+      el.querySelector(".chg").textContent = "mock fixed rate";
+      continue;
+    }
+    try{
+      const r = await fetch(`https://api.dexscreener.com/tokens/v1/base/${s.address}`, { headers:{ "User-Agent":"Mozilla/5.0" }});
+      const pairs = await r.json();
+      const usdc = (pairs||[]).filter(p=>p?.quoteToken?.symbol==="USDC").sort((a,b)=>(b.liquidity?.usd||0)-(a.liquidity?.usd||0))[0];
+      if (!usdc) throw new Error("no USDC pair");
+      prices[s.symbol] = { priceUsd:Number(usdc.priceUsd), change24h:usdc.priceChange?.h24 ?? null };
+      const el = grid.querySelector(`[data-sym="${s.symbol}"]`);
+      el.querySelector(".price").textContent = "$"+Number(usdc.priceUsd).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+      const ch = usdc.priceChange?.h24;
+      el.querySelector(".chg").innerHTML = ch==null ? "" : `<span class="${ch>=0?"up":"down"}">${ch>=0?"+":""}${ch.toFixed(2)}% (24h)</span>`;
+    }catch(e){
+      const el = grid.querySelector(`[data-sym="${s.symbol}"]`);
+      if (el) { el.querySelector(".price").textContent = "price unavailable"; el.querySelector(".chg").textContent = String(e.message||e); }
+    }
+  }
+}
+function fmtStock(amountInUSDC, priceUsd){
+  // amountOut (8dp) = amountInUSDC(6dp) / price * 1e8 ; minOut at 1% slippage
+  const priceScaled = BigInt(Math.round(priceUsd*1e6));
+  const out = (BigInt(amountInUSDC)*100000000n)/priceScaled;
+  const minOut = out*BigInt(10000-SLIPPAGE_BPS)/10000n;
+  return { out, minOut };
+}
+async function updateTradeQuote(){
+  const sym = $("tradeStock").value, amt = Number($("tradeAmount").value||0);
+  const p = prices[sym];
+  if (!p || !amt){ $("tradeQuote").textContent=""; return; }
+  const { out, minOut } = fmtStock(BigInt(Math.round(amt*1e6)), p.priceUsd);
+  $("tradeQuote").textContent = `≈ ${(Number(out)/1e8).toFixed(6)} ${sym} for $${amt} USDC (min ${(Number(minOut)/1e8).toFixed(6)} at 1% slippage, live price $${p.priceUsd}).`;
+}
+
+/* ================= wallet ================= */
+async function connect(){
+  if (!window.ethereum){ alert("No injected wallet found. Install MetaMask (or another EVM wallet) and retry."); return; }
+  try{
+    provider = new ethers.BrowserProvider(window.ethereum);
+    const accounts = await provider.send("eth_requestAccounts", []);
+    account = accounts[0];
+    signer = await provider.getSigner();
+    const net = await provider.getNetwork();
+    chainId = Number(net.chainId);
+    await refreshNetworkUI();
+    refreshStockLists(); await loadPrices(); updateTradeQuote();
+    window.ethereum.on("accountsChanged", ()=>location.reload());
+    window.ethereum.on("chainChanged", ()=>location.reload());
+    log("connected", account, "chain", chainId);
+    await loadPlans(); await loadActivity();
+  }catch(e){ log("connect failed:", e.message||e); }
+}
+async function ensureChain(){
+  if (!CHAIN[chainId]){
+    if (!confirm(`This app supports Base (${8453}) and Base Sepolia (${84532}). Switch to Base now?`)) return false;
+    try{ await window.ethereum.request({ method:"wallet_switchEthereumChain", params:[{ chainId:"0x2105" }] }); return true; }
+    catch(e){ log("switch chain failed:", e.message||e); return false; }
+  }
+  return true;
+}
+async function refreshNetworkUI(){
+  const c = CHAIN[chainId];
+  $("netLabel").textContent = c ? `${c.name} • ${short(account)}` : `chain ${chainId} (unsupported) • ${short(account)}`;
+  $("connectBtn").textContent = "Connected";
+  $("sepoliaBanner").style.display = chainId===84532 ? "" : "none";
+  const deployed = c && c.registry!==ZERO && c.swapper!==ZERO;
+  $("deployBanner").style.display = deployed ? "none" : "";
+  $("contractList").innerHTML = c ? `
+    <div>Registry (StockPilotPlans): <span class="addr">${c.registry}</span></div>
+    <div>Swapper (StockPilotSwapper): <span class="addr">${c.swapper}</span></div>
+    <div>USDC: <span class="addr">${c.usdc}</span></div>` : "";
+}
+function registry(){
+  const c = CHAIN[chainId];
+  if (!c || c.registry===ZERO) throw new Error("registry not deployed on this network yet");
+  return new ethers.Contract(c.registry, REGISTRY_ABI, signer);
+}
+function swapper(){
+  const c = CHAIN[chainId];
+  if (!c || c.swapper===ZERO) throw new Error("swapper not deployed on this network yet");
+  return new ethers.Contract(c.swapper, SWAPPER_ABI, signer);
+}
+function usdc(){
+  const c = CHAIN[chainId];
+  return new ethers.Contract(c.usdc, ERC20_ABI, signer);
+}
+
+/* ================= plans ================= */
+async function loadPlans(){
+  const wrap = $("plansWrap");
+  if (!account){ wrap.innerHTML = "<p class='note'>Connect a wallet to see your plans.</p>"; return; }
+  if (!CHAIN[chainId]){ wrap.innerHTML = "<p class='note'>Unsupported network.</p>"; return; }
+  const c = CHAIN[chainId];
+  if (c.registry===ZERO){ wrap.innerHTML = "<p class='note'>Registry not deployed on this network yet.</p>"; return; }
+  try{
+    const reg = registry();
+    const ids = await reg.plansOf(account);
+    if (ids.length===0){ wrap.innerHTML = "<p class='note'>No plans yet — create one above.</p>"; return; }
+    const rows = [];
+    for (const id of ids){
+      const p = await reg.getPlan(id);
+      const due = await reg.isDue(id);
+      const st = stockByAddr(p.token);
+      rows.push(`<tr><td>#${Number(id)}<br><span class="pill ${due?"due":"wait"}">${due?"DUE":"waiting"}</span></td>
+        <td>${st?st.symbol:short(p.token)}<br><span class="addr">${p.name}</span></td>
+        <td>$${(Number(p.amountUSDC)/1e6).toFixed(2)} / ${(Number(p.intervalSeconds)/3600).toFixed(0)}h</td>
+        <td>${Number(p.executions)} / ${Number(p.maxExecutions)}${p.active?"":" (cancelled)"}</td>
+        <td><button data-exec="${Number(id)}" ${(!due||!p.active)?"disabled":""}>Execute now</button>
+        <button class="danger" data-cancel="${Number(id)}" ${!p.active?"disabled":""}>Cancel</button></td></tr>`);
+    }
+    wrap.innerHTML = `<table><thead><tr><th>Plan</th><th>Stock</th><th>Amount / interval</th><th>Executions</th><th></th></tr></thead><tbody>${rows.join("")}</tbody></table>`;
+    wrap.querySelectorAll("[data-exec]").forEach(b=>b.onclick=()=>executePlan(Number(b.dataset.exec)));
+    wrap.querySelectorAll("[data-cancel]").forEach(b=>b.onclick=()=>cancelPlan(Number(b.dataset.cancel)));
+  }catch(e){ wrap.innerHTML = `<p class="note">Failed to load plans: ${e.message||e}</p>`; log("loadPlans:", e.message||e); }
+}
+async function createPlan(){
+  if (!account) return alert("Connect a wallet first.");
+  if (!await ensureChain()) return;
+  const stock = stocks().find(s=>s.symbol===$("planStock").value);
+  const amount = BigInt(Math.round(Number($("planAmount").value||0)*1e6));
+  const interval = BigInt($("planInterval").value);
+  const max = BigInt($("planMax").value||1);
+  const name = $("planName").value.trim().slice(0,64);
+  if (amount<=0n) return alert("Amount must be > 0 USDC.");
+  if (!name) return alert("Give the plan a name.");
+  try{
+    log(`creating plan: ${stock.symbol} $${Number(amount)/1e6} every ${interval}s, max ${max}…`);
+    const tx = await registry().createPlan(stock.address, amount, interval, max, name);
+    log("createPlan tx:", tx.hash, explorerTx(tx.hash));
+    const rc = await tx.wait();
+    log("plan created in block", rc.blockNumber);
+    await loadPlans(); await loadActivity();
+  }catch(e){ log("createPlan failed:", e.reason||e.message||e); alert("Create plan failed: "+(e.reason||e.message||e)); }
+}
+async function cancelPlan(planId){
+  if (!confirm(`Cancel plan #${planId}? This is on-chain and cannot be undone.`)) return;
+  try{
+    const tx = await registry().cancelPlan(planId);
+    log("cancelPlan tx:", tx.hash); await tx.wait(); log("plan cancelled");
+    await loadPlans(); await loadActivity();
+  }catch(e){ log("cancel failed:", e.reason||e.message||e); }
+}
+
+/* ================= execute / trade ================= */
+// One execution: approve (if needed) -> swap via swapper -> record on-chain.
+// Returns the swap receipt; throws on any step so nothing is half-recorded.
+async function doSwap(stock, amountInUSDC){
+  const c = CHAIN[chainId];
+  const p = prices[stock.symbol];
+  if (!p) throw new Error("live price unavailable for "+stock.symbol);
+  const { out, minOut } = fmtStock(amountInUSDC, p.priceUsd);
+  const sw = swapper();
+  const us = usdc();
+  const allowance = await us.allowance(account, c.swapper);
+  if (allowance < amountInUSDC){
+    log(`approving ${c.swapper} to pull $${Number(amountInUSDC)/1e6} USDC…`);
+    const atx = await us.approve(c.swapper, amountInUSDC);
+    log("approve tx:", atx.hash, explorerTx(atx.hash));
+    await atx.wait(); log("approved");
+  }
+  log(`swapping $${Number(amountInUSDC)/1e6} USDC -> ${stock.symbol} (est ${(Number(out)/1e8).toFixed(6)}, min ${(Number(minOut)/1e8).toFixed(6)})…`);
+  const stx = await sw.swapExactInput(stock.pool, c.usdc, stock.address, amountInUSDC, minOut, account);
+  log("swap tx:", stx.hash, explorerTx(stx.hash));
+  const rc = await stx.wait();
+  log(`swap confirmed in block ${rc.blockNumber}`);
+  // Amount actually received: read it from the Swapped event if present,
+  // else fall back to the pre-swap estimate.
+  let amountOut = out;
+  try{
+    const iface = new ethers.Interface(SWAPPER_ABI);
+    for (const l of rc.logs){ try{ const ev = iface.parseLog(l); if (ev && ev.name==="Swapped") amountOut = ev.args.amountOut; }catch(_){} }
+  }catch(_){}
+  return { txHash: stx.hash, amountOut };
+}
+async function executePlan(planId){
+  if (!await ensureChain()) return;
+  try{
+    const reg = registry();
+    const p = await reg.getPlan(planId);
+    const stock = stockByAddr(p.token);
+    if (!stock) throw new Error("plan token is not a known stock");
+    log(`executing plan #${planId} (${stock.symbol}, $${Number(p.amountUSDC)/1e6})…`);
+    const { txHash, amountOut } = await doSwap(stock, p.amountUSDC);
+    log(`recording execution on-chain (plan #${planId}, out ${(Number(amountOut)/1e8).toFixed(6)} ${stock.symbol})…`);
+    const rtx = await reg.recordExecution(planId, p.amountUSDC, amountOut, txHash);
+    log("recordExecution tx:", rtx.hash, explorerTx(rtx.hash));
+    await rtx.wait(); log("execution recorded ✓");
+    alert(`Plan #${planId} executed: received ${(Number(amountOut)/1e8).toFixed(6)} ${stock.symbol}.`);
+    await loadPlans(); await loadActivity();
+  }catch(e){ log("execute failed:", e.reason||e.message||e); alert("Execute failed: "+(e.reason||e.message||e)); }
+}
+async function adHocTrade(){
+  if (!account) return alert("Connect a wallet first.");
+  if (!await ensureChain()) return;
+  const stock = stocks().find(s=>s.symbol===$("tradeStock").value);
+  const amount = BigInt(Math.round(Number($("tradeAmount").value||0)*1e6));
+  if (amount<=0n) return alert("Amount must be > 0 USDC.");
+  try{
+    log(`ad-hoc trade: $${Number(amount)/1e6} USDC -> ${stock.symbol}…`);
+    const { txHash, amountOut } = await doSwap(stock, amount);
+    log(`recording trade on-chain (out ${(Number(amountOut)/1e8).toFixed(6)} ${stock.symbol})…`);
+    const rtx = await registry().recordTrade(stock.address, amount, amountOut, txHash);
+    log("recordTrade tx:", rtx.hash, explorerTx(rtx.hash));
+    await rtx.wait(); log("trade recorded ✓");
+    alert(`Bought ${(Number(amountOut)/1e8).toFixed(6)} ${stock.symbol} for $${Number(amount)/1e6} USDC.`);
+    await loadActivity();
+  }catch(e){ log("trade failed:", e.reason||e.message||e); alert("Trade failed: "+(e.reason||e.message||e)); }
+}
+
+/* ================= activity ================= */
+async function loadActivity(){
+  const wrap = $("activityWrap");
+  if (!account){ wrap.innerHTML = "<p class='note'>Connect a wallet to load activity.</p>"; return; }
+  const c = CHAIN[chainId];
+  if (!c || c.registry===ZERO){ wrap.innerHTML = "<p class='note'>Registry not deployed on this network yet.</p>"; return; }
+  try{
+    const reg = new ethers.Contract(c.registry, REGISTRY_ABI, provider);
+    const [created, executed, trades] = await Promise.all([
+      reg.queryFilter(reg.filters.PlanCreated, -20000),
+      reg.queryFilter(reg.filters.PlanExecuted, -20000),
+      reg.queryFilter(reg.filters.TradeRecorded, -20000),
+    ]);
+    const items = [];
+    for (const e of created) items.push({ b:e.blockNumber, t:`Plan #${e.args.planId} created — ${stockByAddr(e.args.token)?.symbol||short(e.args.token)} $${Number(e.args.amountUSDC)/1e6} / ${Number(e.args.intervalSeconds)/3600}h, max ${e.args.maxExecutions} — by ${short(e.args.owner)}` });
+    for (const e of executed) items.push({ b:e.blockNumber, t:`Plan #${e.args.planId} executed #${e.args.executionIndex} — $${Number(e.args.amountInUSDC)/1e6} in, ${(Number(e.args.amountOut)/1e8).toFixed(6)} out — <a href="${explorerTx(e.args.txHash)}" target="_blank">swap tx</a>` });
+    for (const e of trades) items.push({ b:e.blockNumber, t:`Trade — ${stockByAddr(e.args.token)?.symbol||short(e.args.token)} $${Number(e.args.amountInUSDC)/1e6} in, ${(Number(e.args.amountOut)/1e8).toFixed(6)} out — by ${short(e.args.trader)} — <a href="${explorerTx(e.args.txHash)}" target="_blank">swap tx</a>` });
+    items.sort((a,b)=>b.b-a.b);
+    wrap.innerHTML = items.length ? `<table><tbody>${items.slice(0,20).map(i=>`<tr><td>#${i.b}</td><td>${i.t}</td></tr>`).join("")}</tbody></table>` : "<p class='note'>No activity in the last ~20,000 blocks.</p>";
+  }catch(e){ wrap.innerHTML = `<p class="note">Failed to load activity: ${e.message||e}</p>`; }
+}
+
+/* ================= init ================= */
+refreshStockLists();
+$("connectBtn").onclick = connect;
+$("createPlanBtn").onclick = createPlan;
+$("tradeBtn").onclick = adHocTrade;
+$("tradeAmount").oninput = updateTradeQuote;
+$("tradeStock").onchange = updateTradeQuote;
+loadPrices(); updateTradeQuote();
+setInterval(loadPrices, 60000); // refresh prices every minute
+log("StockPilot ready. Connect a wallet (Base or Base Sepolia) to use plans and swaps.");
+</script>
+</body>
+</html>

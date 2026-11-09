@@ -1,0 +1,342 @@
+[
+ {
+  "symbol": "AAPLc",
+  "ticker": "AAPL",
+  "name": "Apple Inc.",
+  "address": "0xb200000000000000000000C2e324d24d7eEcd1fb",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": 350.4872,
+  "supply": 6474.40361951
+ },
+ {
+  "symbol": "ADBEc",
+  "ticker": "ADBE",
+  "name": "Adobe Inc.",
+  "address": "0xB20000000000000000000034533Ed3961f222Cd4",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": null
+ },
+ {
+  "symbol": "AMDc",
+  "ticker": "AMD",
+  "name": "Advanced Micro Devices, Inc.",
+  "address": "0xB2000000000000000000000d8Ce462E99ee7A47B",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": 1133.92197948
+ },
+ {
+  "symbol": "AMZNc",
+  "ticker": "AMZN",
+  "name": "Amazon.com Inc.",
+  "address": "0xb200000000000000000000d9192b6B456483C2E8",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": 270.352425,
+  "supply": 7161.17071438
+ },
+ {
+  "symbol": "ARMc",
+  "ticker": "ARM",
+  "name": "Arm Holdings plc",
+  "address": "0xB20000000000000000000026215D755356E5043f",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": 255.49890308
+ },
+ {
+  "symbol": "AVGOc",
+  "ticker": "AVGO",
+  "name": "Broadcom Inc.",
+  "address": "0xB200000000000000000000Fc737aeA6196aB5a4c",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": 1070.53807558
+ },
+ {
+  "symbol": "CRCLc",
+  "ticker": "CRCL",
+  "name": "Circle Internet Group Inc.",
+  "address": "0xB20000000000000000000019f6E7C675b73C2e4D",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": 68.8875,
+  "supply": 1685.59052387
+ },
+ {
+  "symbol": "CRMc",
+  "ticker": "CRM",
+  "name": "Salesforce, Inc.",
+  "address": "0xB2000000000000000000006432a3a7991e718DBB",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": null
+ },
+ {
+  "symbol": "DDOGc",
+  "ticker": "DDOG",
+  "name": "Datadog, Inc.",
+  "address": "0xb2000000000000000000002C99976e240eD773E6",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": null
+ },
+ {
+  "symbol": "DISc",
+  "ticker": "DIS",
+  "name": "The Walt Disney Company",
+  "address": "0xb2000000000000000000000bD75bF439A38bF7DF",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": null
+ },
+ {
+  "symbol": "Fc",
+  "ticker": "F",
+  "name": "Ford Motor Company",
+  "address": "0xB200000000000000000000CE4f8fC7ba5cA0359b",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": null
+ },
+ {
+  "symbol": "GMEc",
+  "ticker": "GME",
+  "name": "GameStop Corp.",
+  "address": "0xb2000000000000000000007790ed6E48e06eD935",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": 1990.00732968
+ },
+ {
+  "symbol": "GOOGLc",
+  "ticker": "GOOGL",
+  "name": "Alphabet Inc.",
+  "address": "0xb2000000000000000000002D0BA3164cc74f58B7",
+  "decimals": 8,
+  "multiplier": 1.0003771186767842,
+  "nav": 293.64069564,
+  "supply": 35255.45149164
+ },
+ {
+  "symbol": "INTCc",
+  "ticker": "INTC",
+  "name": "Intel Corporation",
+  "address": "0xB2000000000000000000004AFF16039bA04bdFBc",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": 58.3715,
+  "supply": 2167.4961929
+ },
+ {
+  "symbol": "JPMc",
+  "ticker": "JPM",
+  "name": "JPMorgan Chase & Co.",
+  "address": "0xB200000000000000000000FDe956536A25725156",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": null
+ },
+ {
+  "symbol": "LLYc",
+  "ticker": "LLY",
+  "name": "Eli Lilly & Co",
+  "address": "0xB200000000000000000000f1a0F91e34892E4718",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": 144.86218134
+ },
+ {
+  "symbol": "METAc",
+  "ticker": "META",
+  "name": "Meta Platforms Inc.",
+  "address": "0xb2000000000000000000008bC8786B856E61707C",
+  "decimals": 8,
+  "multiplier": 1.0003137922895982,
+  "nav": 640.40031464,
+  "supply": 8312.53878518
+ },
+ {
+  "symbol": "MSFTc",
+  "ticker": "MSFT",
+  "name": "Microsoft Corporation",
+  "address": "0xB200000000000000000000Ab99cFa739E253872B",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": 541.22395,
+  "supply": 2742.57085647
+ },
+ {
+  "symbol": "MSTRc",
+  "ticker": "MSTR",
+  "name": "Strategy Inc.",
+  "address": "0xb2000000000000000000004884b426556b92883d",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": 128.028475,
+  "supply": 16460.9847689
+ },
+ {
+  "symbol": "NFLXc",
+  "ticker": "NFLX",
+  "name": "Netflix Inc",
+  "address": "0xb20000000000000000000058B8c947e44011dFE6",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": 7869.58717567
+ },
+ {
+  "symbol": "NKEc",
+  "ticker": "NKE",
+  "name": "NIKE, Inc.",
+  "address": "0xB20000000000000000000071F6c75C5892b09Beb",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": null
+ },
+ {
+  "symbol": "NVDAc",
+  "ticker": "NVDA",
+  "name": "NVIDIA Corporation",
+  "address": "0xb20000000000000000000078ee7ce2fE4908108C",
+  "decimals": 8,
+  "multiplier": 1.0005379395763694,
+  "nav": 178.26584469,
+  "supply": 36951.34994513
+ },
+ {
+  "symbol": "ORCLc",
+  "ticker": "ORCL",
+  "name": "Oracle Corporation",
+  "address": "0xb200000000000000000000347AFbA223D7B6b63C",
+  "decimals": 8,
+  "multiplier": 1.0000399883233386,
+  "nav": null,
+  "supply": 3136.19109818
+ },
+ {
+  "symbol": "PFEc",
+  "ticker": "PFE",
+  "name": "Pfizer Inc",
+  "address": "0xB20000000000000000000018FE7eC7d6DfeeB528",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": 9.86627835
+ },
+ {
+  "symbol": "PLTRc",
+  "ticker": "PLTR",
+  "name": "Palantir Technologies Inc.",
+  "address": "0xb2000000000000000000007d16372840dF4dAbbe",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": 2991.96276072
+ },
+ {
+  "symbol": "PYPLc",
+  "ticker": "PYPL",
+  "name": "PayPal Holdings, Inc.",
+  "address": "0xb200000000000000000000450ad3abE5d4846c6E",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": 161.0682849
+ },
+ {
+  "symbol": "QCOMc",
+  "ticker": "QCOM",
+  "name": "Qualcomm Incorporated",
+  "address": "0xB2000000000000000000005672D78eFF30D24665",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": null
+ },
+ {
+  "symbol": "RBLXc",
+  "ticker": "RBLX",
+  "name": "Roblox Corporation",
+  "address": "0xB2000000000000000000005bd7AE89b9E6189Bb5",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": 73.40046308
+ },
+ {
+  "symbol": "SNOWc",
+  "ticker": "SNOW",
+  "name": "Snowflake Inc.",
+  "address": "0xB2000000000000000000004AcDC9A922FCfBCc7f",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": null
+ },
+ {
+  "symbol": "SOFIc",
+  "ticker": "SOFI",
+  "name": "SoFi Technologies, Inc.",
+  "address": "0xB2000000000000000000003eF37a7c863DC1482A",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": null
+ },
+ {
+  "symbol": "TSLAc",
+  "ticker": "TSLA",
+  "name": "Tesla Inc.",
+  "address": "0xb2000000000000000000001e800a7f5189430cD0",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": 377.3425,
+  "supply": 6401.17576763
+ },
+ {
+  "symbol": "UNHc",
+  "ticker": "UNH",
+  "name": "UnitedHealth Group Incorporated",
+  "address": "0xb200000000000000000000c367d37d07150182A2",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": 67.00418926
+ },
+ {
+  "symbol": "Vc",
+  "ticker": "V",
+  "name": "Visa Inc.",
+  "address": "0xB20000000000000000000054b11Fd279a4f7D4EF",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": null
+ },
+ {
+  "symbol": "XOMc",
+  "ticker": "XOM",
+  "name": "ExxonMobil Holdings Corporation",
+  "address": "0xb20000000000000000000065F7d0D6aac5fD4Bfd",
+  "decimals": 8,
+  "multiplier": 1,
+  "nav": null,
+  "supply": null
+ }
+]
