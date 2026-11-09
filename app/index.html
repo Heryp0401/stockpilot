@@ -170,6 +170,18 @@ const SWAPPER_ABI = ["function swapExactInput(address pool,address tokenIn,addre
 const ERC20_ABI = ["function approve(address,uint256) returns (bool)","function allowance(address,address) view returns (uint256)","function balanceOf(address) view returns (uint256)","function decimals() view returns (uint8)"];
 const ZERO = "0x0000000000000000000000000000000000000000";
 const SLIPPAGE_BPS = 100; // 1%
+/* Base Builder Code (ERC-8021), registered on base.dev. Public value:
+   appended to every write tx so Base attributes StockPilot activity.
+   App Builder Code: bc_1d16z07i. Full dataSuffix hex (29 bytes). */
+const DATA_SUFFIX = "0x62635f316431367a3037690b0080218021802180218021802180218021";
+function withAttribution(data){ return DATA_SUFFIX ? data + DATA_SUFFIX.slice(2) : data; }
+/* ethers v6 contract methods take no data override, so populate the tx,
+   append the Builder Code suffix, then send it through the signer. */
+async function sendAttributed(contract, method, args){
+  const txReq = await contract[method].populateTransaction(...args);
+  txReq.data = withAttribution(txReq.data);
+  return signer.sendTransaction(txReq);
+}
 
 /* ================= state ================= */
 let provider = null, signer = null, account = null, chainId = null;
@@ -319,7 +331,7 @@ async function createPlan(){
   if (!name) return alert("Give the plan a name.");
   try{
     log(`creating plan: ${stock.symbol} $${Number(amount)/1e6} every ${interval}s, max ${max}…`);
-    const tx = await registry().createPlan(stock.address, amount, interval, max, name);
+    const tx = await sendAttributed(registry(), "createPlan", [stock.address, amount, interval, max, name]);
     log("createPlan tx:", tx.hash, explorerTx(tx.hash));
     const rc = await tx.wait();
     log("plan created in block", rc.blockNumber);
@@ -348,12 +360,12 @@ async function doSwap(stock, amountInUSDC){
   const allowance = await us.allowance(account, c.swapper);
   if (allowance < amountInUSDC){
     log(`approving ${c.swapper} to pull $${Number(amountInUSDC)/1e6} USDC…`);
-    const atx = await us.approve(c.swapper, amountInUSDC);
+    const atx = await sendAttributed(us, "approve", [c.swapper, amountInUSDC]);
     log("approve tx:", atx.hash, explorerTx(atx.hash));
     await atx.wait(); log("approved");
   }
   log(`swapping $${Number(amountInUSDC)/1e6} USDC -> ${stock.symbol} (est ${(Number(out)/1e8).toFixed(6)}, min ${(Number(minOut)/1e8).toFixed(6)})…`);
-  const stx = await sw.swapExactInput(stock.pool, c.usdc, stock.address, amountInUSDC, minOut, account);
+  const stx = await sendAttributed(sw, "swapExactInput", [stock.pool, c.usdc, stock.address, amountInUSDC, minOut, account]);
   log("swap tx:", stx.hash, explorerTx(stx.hash));
   const rc = await stx.wait();
   log(`swap confirmed in block ${rc.blockNumber}`);
@@ -376,7 +388,7 @@ async function executePlan(planId){
     log(`executing plan #${planId} (${stock.symbol}, $${Number(p.amountUSDC)/1e6})…`);
     const { txHash, amountOut } = await doSwap(stock, p.amountUSDC);
     log(`recording execution on-chain (plan #${planId}, out ${(Number(amountOut)/1e8).toFixed(6)} ${stock.symbol})…`);
-    const rtx = await reg.recordExecution(planId, p.amountUSDC, amountOut, txHash);
+    const rtx = await sendAttributed(reg, "recordExecution", [planId, p.amountUSDC, amountOut, txHash]);
     log("recordExecution tx:", rtx.hash, explorerTx(rtx.hash));
     await rtx.wait(); log("execution recorded ✓");
     alert(`Plan #${planId} executed: received ${(Number(amountOut)/1e8).toFixed(6)} ${stock.symbol}.`);

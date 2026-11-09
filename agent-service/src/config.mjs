@@ -88,11 +88,15 @@ export const REGISTRY_ADDRESS =
     ? REGISTRY_ADDRESS_SEPOLIA
     : REGISTRY_ADDRESS_MAINNET);
 
-// Optional Builder Code (ERC-8021) dataSuffix for the StockPilot agent.
-// Register an agent Builder Code on base.dev (keyed to the agent wallet),
-// then set BUILDER_CODE to the hex suffix, e.g. "0x8021...". Empty = none.
-// The frontend appends this suffix to the swap tx data when present.
-export const BUILDER_CODE = process.env.BUILDER_CODE || "";
+// Base Builder Code (ERC-8021) for StockPilot — App Builder Code registered
+// on base.dev (dashboard.base.org), code bc_1d16z07i. Public value: it is
+// appended to transaction calldata so Base can attribute the activity.
+// The value must be the FULL dataSuffix hex (code ASCII + 1-byte length +
+// schema 0 + 16-byte 8021 marker), NOT just the marker "0x8021..." alone.
+// Override with BUILDER_CODE=<full suffix> when starting the service.
+export const BUILDER_CODE =
+  process.env.BUILDER_CODE ||
+  "0x62635f316431367a3037690b0080218021802180218021802180218021";
 
 // Default slippage for prepared swaps: 100 bps = 1%.
 export const DEFAULT_SLIPPAGE_BPS = 100;
