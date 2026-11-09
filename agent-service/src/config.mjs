@@ -33,6 +33,20 @@ export const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 // Circle testnet USDC on Base Sepolia (faucet.circle.com). 6 decimals.
 export const USDC_BASE_SEPOLIA = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 
+// ---- Base mainnet deployment (live, 10 Nov 2026) ----
+// Mainnet deployment of StockPilotPlans + StockPilotSwapper (real Slipstream
+// pools, no mocks). See MAINNET_DEPLOY.md.
+// Deployer: 0xE10e358D26B5F9F250dc7ae6c23f5Bf63588D7aF (disposable).
+//   StockPilotPlans:  0x3C73Fc8483BEf77886D7648D1fE0e3AAd11582D1
+//     tx 0x1b76f681dc8f8489ec06d1e6174141e0a04e511bfd5ef136bd4abd8443a748ec
+//   StockPilotSwapper: 0xB0EE078994Af6cdC897063ec8F5777fe9a221439
+//     tx 0xf6544b74e5cf4c1b6ddd237ee4eac9c9618f5574892f487791c0c340fe4af758
+// Both verified with code on-chain (BaseScan). Default is mainnet (CHAIN=base).
+export const REGISTRY_ADDRESS_MAINNET =
+  "0x3C73Fc8483BEf77886D7648D1fE0e3AAd11582D1";
+export const SWAPPER_ADDRESS_MAINNET =
+  "0xB0EE078994Af6cdC897063ec8F5777fe9a221439";
+
 // ---- Base Sepolia deployment (live, 9 Nov 2026) ----
 // Testnet deployment of StockPilotPlans + StockPilotSwapper + mock USDC,
 // mock stocks and fixed-rate mock pools. See SEPOLIA_DEPLOY.md.
@@ -63,7 +77,7 @@ export const SWAPPER_ADDRESS =
   process.env.SWAPPER_ADDRESS ||
   (CHAIN === "sepolia"
     ? SWAPPER_ADDRESS_SEPOLIA
-    : "0x0000000000000000000000000000000000000000");
+    : SWAPPER_ADDRESS_MAINNET);
 
 // StockPilotPlans registry — set after deployment (env REGISTRY_ADDRESS).
 // Sepolia and mainnet deployments use the same contract; fill both.
@@ -72,7 +86,7 @@ export const REGISTRY_ADDRESS =
   process.env.REGISTRY_ADDRESS ||
   (CHAIN === "sepolia"
     ? REGISTRY_ADDRESS_SEPOLIA
-    : "0x0000000000000000000000000000000000000000");
+    : REGISTRY_ADDRESS_MAINNET);
 
 // Optional Builder Code (ERC-8021) dataSuffix for the StockPilot agent.
 // Register an agent Builder Code on base.dev (keyed to the agent wallet),

@@ -19,7 +19,7 @@ No funds are ever held by any contract. The user only ever approves USDC to the 
 | Frontend (single-page app) | `app/index.html` | ✅ built (wallet connect, live prices, create plan, execute, ad-hoc trade, activity) |
 | Deploy scripts | `contracts/script/` | ✅ `Deploy.s.sol` (mainnet), `DeploySepolia.s.sol` (full testnet incl. mocks; **deployed 9 Nov 2026, smoke-tested end-to-end on Base Sepolia**) |
 
-**Deployed to Base Sepolia 9 Nov 2026 ~23:44 WIB** (registry `0x2e5A1caB12b8902A840c8636caa58bcba084E060`, swapper `0x1444524A69BFC4352DaAd9B5cd9272A2EbB11bb1` + mock USDC/stocks/pools; smoke test passed — $10 mUSDC → 5,654,829 mNVDAc, recorded on-chain). **Not yet done:** deploy to Base mainnet (user-approved, needs ETH gas), register a Builder Code, get real usage, apply for the Base Builder Grant, submit the hackathon entry (by 5 Dec 2026). See `HACKATHON.md`.
+**Deployed to Base Sepolia 9 Nov 2026 ~23:44 WIB** (registry `0x2e5A1caB12b8902A840c8636caa58bcba084E060`, swapper `0x1444524A69BFC4352DaAd9B5cd9272A2EbB11bb1` + mock USDC/stocks/pools; smoke test passed — $10 mUSDC → 5,654,829 mNVDAc, recorded on-chain). **Deployed to Base mainnet 10 Nov 2026 ~00:52 WIB** (registry `0x3C73Fc8483BEf77886D7648D1fE0e3AAd11582D1`, swapper `0xB0EE078994Af6cdC897063ec8F5777fe9a221439`; deploy cost ~0.00000845 ETH / ~$0.018; leftover ETH returned to the user). **Not yet done:** register a Builder Code, get real usage, apply for the Base Builder Grant, submit the hackathon entry (by 5 Dec 2026). See `HACKATHON.md`.
 
 ## Quick start
 
@@ -104,13 +104,14 @@ forge script script/DeploySepolia.s.sol --rpc-url https://sepolia.base.org --bro
 ```
 Note: use the full RPC URL `https://sepolia.base.org` — the `base-sepolia` alias in `foundry.toml` is not resolved by `forge script --rpc-url`. Deployed 9 Nov 2026 ~23:44 WIB; smoke-tested end-to-end (see `SEPOLIA_DEPLOY.md`).
 
-### Base mainnet (deliberate, user-approved step — needs ETH for gas)
+### Base mainnet — ✅ DEPLOYED 10 Nov 2026 ~00:52 WIB
 ```bash
 cd contracts
 forge script script/Deploy.s.sol --rpc-url base --broadcast --private-key $DEPLOYER_KEY
-# paste the printed addresses into app/index.html CHAIN[8453]
-# and set REGISTRY_ADDRESS / SWAPPER_ADDRESS for the agent service
 ```
+- **StockPilotPlans:** `0x3C73Fc8483BEf77886D7648D1fE0e3AAd11582D1` (tx `0x1b76f681dc8f8489ec06d1e6174141e0a04e511bfd5ef136bd4abd8443a748ec`)
+- **StockPilotSwapper:** `0xB0EE078994Af6cdC897063ec8F5777fe9a221439` (tx `0xf6544b74e5cf4c1b6ddd237ee4eac9c9618f5574892f487791c0c340fe4af758`)
+- Addresses are already wired into `app/index.html` `CHAIN[8453]` and the agent service (`REGISTRY_ADDRESS_MAINNET` / `SWAPPER_ADDRESS_MAINNET` in `agent-service/src/config.mjs`). Full details in `MAINNET_DEPLOY.md`.
 
 Then: register a Builder Code on base.dev (ERC-8021, keyed to the agent wallet), set `BUILDER_CODE`, get real usage, apply for the Base Builder Grant (`docs/` in `~/workspace/base-grants/`), and submit the hackathon entry by **5 Dec 2026** (form on base.org/stocksmaxxing — a user step; this repo builds, it does not submit).
 
