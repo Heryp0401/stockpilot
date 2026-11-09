@@ -3,6 +3,8 @@
 **Status: ✅ DEPLOYED + SMOKE-TESTED — 9 Nov 2026 ~23:44 WIB (deploy), ~23:45–23:57 WIB (smoke test + wiring).**
 Last updated: 9 Nov 2026 ~23:57 WIB.
 
+**Public repo:** https://github.com/Heryp0401/stockpilot
+
 ## Deployer (disposable, testnet-only)
 
 - **Address:** `0x6b5Ed7019E2E56C59964e9550e814E87B42C03D7`

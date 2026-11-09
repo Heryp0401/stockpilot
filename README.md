@@ -1,5 +1,7 @@
 # StockPilot — Agentic Stock Finance on Base
 
+**Public repo:** https://github.com/Heryp0401/stockpilot
+
 **For the Base “Stocks Maxxing Season” hackathon (Agentic Stock Finance track, submissions close 5 Dec 2026).**
 
 StockPilot is a non-custodial, on-chain DCA app for Coinbase tokenized stocks on Base. A user creates a **Plan** (“DCA $10 USDC into NVDAc every week”), the StockPilot **agent** watches for due plans and prepares the exact swap, and the user executes it in their own wallet. Every execution is recorded on-chain, so usage is attributable and auditable — which is what the hackathon scores (50% real on-chain usage).
